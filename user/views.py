@@ -3,6 +3,7 @@ from rest_framework.response import Response # type: ignore
 from rest_framework import status # type: ignore
 from .serializers import *
 from django.contrib.auth import login
+from django.utils import timezone
 
 class RegistrationView(APIView):
     def post(self, request, *args, **kwargs):
@@ -48,3 +49,34 @@ class LoginView(APIView):
             token, created = Token.objects.get_or_create(user=user)
             return Response({"token": token.key}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class UserLoginActivityView(APIView):
+    def post(self, request):
+        # Retrieve data from request
+        login_ip = request.META.get('REMOTE_ADDR')
+        user_agent_info = request.META.get('HTTP_USER_AGENT', 'unknown')  # Fallback to 'unknown' if not provided
+        login_username = request.data.get('username')
+        login_status = request.data.get('status', 'S')
+
+        # Create a login activity record
+        login_activity = UserLoginActivity.objects.create(
+            login_IP=login_ip,
+            login_datetime=timezone.now(),
+            login_username=login_username,
+            status=login_status,
+            user_agent_info=user_agent_info  # Ensure this is not null
+        )
+
+        serializer = UserLoginActivitySerializer(login_activity)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class UserActivityView(APIView):
+    def get(self, request, username):
+        # Fetch the user's activity details
+        user_activities = UserActivity1.objects.filter(user__username=username).order_by('-date')
+        
+        if user_activities.exists():
+            serializer = UserActivitySerializer(user_activities, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'No activity found for this user'}, status=status.HTTP_404_NOT_FOUND)

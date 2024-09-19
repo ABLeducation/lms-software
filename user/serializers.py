@@ -1,5 +1,5 @@
 from rest_framework import serializers # type: ignore
-from .models import Student, Teacher, School, CustomUser
+from .models import *
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token # type: ignore
 
@@ -81,3 +81,13 @@ class LoginSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
+    
+class UserLoginActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserLoginActivity
+        fields = '__all__'
+        
+class UserActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserActivity1
+        fields = '__all__'
