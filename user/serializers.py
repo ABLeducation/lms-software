@@ -1,5 +1,7 @@
 from rest_framework import serializers # type: ignore
 from .models import Student, Teacher, School, CustomUser
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token # type: ignore
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -49,3 +51,33 @@ class SchoolSerializer(serializers.ModelSerializer):
         user = CustomUser.objects.create_user(**user_data)
         school = School.objects.create(user=user, **validated_data)
         return school
+
+class LoginSerializer(serializers.Serializer):
+    username_or_email = serializers.CharField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, data):
+        username_or_email = data.get("username_or_email")
+        password = data.get("password")
+
+        if username_or_email and password:
+            # Check if the input is an email
+            if '@' in username_or_email:
+                try:
+                    user_obj = CustomUser.objects.get(email=username_or_email)
+                    username = user_obj.username
+                except CustomUser.DoesNotExist:
+                    raise serializers.ValidationError("User with this email does not exist")
+            else:
+                username = username_or_email
+            
+            # Authenticate with username
+            user = authenticate(username=username, password=password)
+
+            if user is None:
+                raise serializers.ValidationError("Invalid credentials")
+        else:
+            raise serializers.ValidationError("Must include 'username_or_email' and 'password'")
+
+        data['user'] = user
+        return data

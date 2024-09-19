@@ -1,6 +1,7 @@
 import pytest # type: ignore
 from rest_framework import status  # type: ignore
 from django.urls import reverse
+from rest_framework.test import APITestCase # type: ignore
 
 @pytest.mark.django_db
 def test_register_student(client):

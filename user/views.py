@@ -1,7 +1,8 @@
 from rest_framework.views import APIView # type: ignore
 from rest_framework.response import Response # type: ignore
 from rest_framework import status # type: ignore
-from .serializers import StudentSerializer, TeacherSerializer, SchoolSerializer
+from .serializers import *
+from django.contrib.auth import login
 
 class RegistrationView(APIView):
     def post(self, request, *args, **kwargs):
@@ -37,3 +38,13 @@ class RegistrationView(APIView):
         else:
             print("Serializer errors:", serializer.errors)  # Print errors if serializer is invalid
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LoginView(APIView):
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            login(request, user)
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({"token": token.key}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
