@@ -42,7 +42,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'user',
+    'curriculum',
+    'quiz',
     'drf_yasg',
+    'django_extensions'
 ]
 
 MIDDLEWARE = [
@@ -147,6 +150,8 @@ REST_FRAMEWORK = {
 
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React dev server
+    "http://localhost:5173",  # React dev server
 ]
 
+APPEND_SLASH=False
+CORS_ALLOW_ALL_ORIGINS = True

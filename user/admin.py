@@ -8,7 +8,6 @@ admin.site.register(CustomUser)
 admin.site.register(Student)
 admin.site.register(Teacher)
 admin.site.register(School)
-# admin.site.register(UserLoginActivity)
 admin.site.register(UserActivity1)
 
 class SchoolFilter(admin.SimpleListFilter):
@@ -144,3 +143,16 @@ class UserLoginActivityAdmin(admin.ModelAdmin):
         return response
 
     export_as_excel.short_description = "Export Selected as Excel"
+    
+admin.site.register(Macroplanner)
+admin.site.register(Microplanner)
+admin.site.register(AdvocacyVisit)
+admin.site.register(InnovationClub)
+admin.site.register(Competition)
+admin.site.register(GuestSession)
+admin.site.register(KreativityShow)
+admin.site.register(SchoolContract)
+admin.site.register(SchoolGallery)
+admin.site.register(ObservationSheet)
+admin.site.register(CurriculumView)
+admin.site.register(NotificationStudent)

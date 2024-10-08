@@ -33,4 +33,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(('user.urls', 'user'), namespace='users')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('curriculum/', include(('curriculum.urls','curriculum'), namespace='curriculum')),
+    path('quiz/', include(('quiz.urls','quiz'), namespace='quiz')),
 ]

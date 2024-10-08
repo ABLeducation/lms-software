@@ -18,7 +18,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ('user', 'name', 'grade', 'section', 'school')
+        fields = ("__all__")
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -31,7 +31,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = ('user', 'school')
+        fields = "__all__"
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -44,7 +44,7 @@ class SchoolSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = School
-        fields = ('user', 'school')
+        fields = "__all__"
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -90,4 +90,24 @@ class UserLoginActivitySerializer(serializers.ModelSerializer):
 class UserActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserActivity1
+        fields = '__all__'
+        
+class MacroplannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Macroplanner
+        fields = '__all__'
+        
+class MicroplannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Microplanner
+        fields = '__all__'
+        
+class AdvocacyVisitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdvocacyVisit
+        fields = '__all__' 
+        
+class NotificationStudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NotificationStudent
         fields = '__all__'
