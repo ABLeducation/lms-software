@@ -1,3 +1,3 @@
 from .base import *
 
-ALLOWED_HOSTS = ['.vercel.app']
+ALLOWED_HOSTS = ['*']
