@@ -91,20 +91,7 @@ class UserLoginActivityView(APIView):
 
         serializer = UserLoginActivitySerializer(login_activity)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-class UserActivityView(APIView):
-    @swagger_auto_schema(
-        responses={200: UserActivitySerializer(many=True), 404: 'No activity found'}
-    )
-    def get(self, request, username):
-        # Fetch the user's activity details
-        user_activities = UserActivity1.objects.filter(user__username=username).order_by('-date')
-        
-        if user_activities.exists():
-            serializer = UserActivitySerializer(user_activities, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'No activity found for this user'}, status=status.HTTP_404_NOT_FOUND)
+
 
 class MacroplannerView(generics.GenericAPIView):
     serializer_class = MacroplannerSerializer

@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
-
+import os
 # User=get_user_model()
 
 # Create your models here.
@@ -15,18 +15,28 @@ class CustomUser(AbstractUser):
     role=models.CharField(max_length=10,choices=Role_Choices)
     email = models.EmailField(unique=True)
     
+def student_profile_image(instance, filename):
+    upload_to = 'Images/'
+    ext = filename.split('.')[-1]
+    # get filename
+    if instance.user:
+        filename = 'Student_Pictures/{}.{}'.format(instance.user, ext)
+    return os.path.join(upload_to, filename)
+    
 class Student(models.Model):
     user=models.OneToOneField(CustomUser,on_delete=models.CASCADE,primary_key=True)
     name=models.CharField(max_length=50)
     grade=models.CharField(max_length=50)
     section=models.CharField(max_length=50)
     school=models.CharField(max_length=200)
+    profile_pic=models.ImageField(upload_to=student_profile_image, blank=True, verbose_name='Profile Image')
     
     class Meta:
         verbose_name = 'Student'
 
     def __str__(self):
         return self.user.username
+    
 GRADES = [
     ('grade_1', 'Grade 1'),
     ('grade_2', 'Grade 2'),

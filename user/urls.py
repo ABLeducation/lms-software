@@ -13,23 +13,24 @@ urlpatterns = [
     path('register/', RegistrationView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', UserLogoutView.as_view(), name='user_logout'),
-    path('login-activity/', UserLoginActivityView.as_view(), name='login-activity'),
-    path('user-activity/<str:username>/', UserActivityView.as_view(), name='user-activity'),
-    path('macroplanner/', MacroplannerView.as_view(), name='macroplanner_create'),
-    path('macroplanner/<str:school_name>/', MacroplannerView.as_view(), name='macroplanner'),
-    path('microplanner/', MicroplannerView.as_view(), name='microplanner-create'),
-    path('microplanner/<str:school_name>/', MicroplannerView.as_view(), name='microplanner'),
-    path('advocacy-reports/<str:school_name>/', AdvocacyVisitView.as_view(), name='advocacy_reports_get'),  # For GET
-    path('advocacy-reports/', AdvocacyVisitView.as_view(), name='advocacy_reports_post'),  # For POST
+    # path('macroplanner/', MacroplannerView.as_view(), name='macroplanner_create'),
+    # path('macroplanner/<str:school_name>/', MacroplannerView.as_view(), name='macroplanner'),
+    # path('microplanner/', MicroplannerView.as_view(), name='microplanner-create'),
+    # path('microplanner/<str:school_name>/', MicroplannerView.as_view(), name='microplanner'),
+    # path('advocacy-reports/<str:school_name>/', AdvocacyVisitView.as_view(), name='advocacy_reports_get'), 
+    # path('advocacy-reports/', AdvocacyVisitView.as_view(), name='advocacy_reports_post'),  
     
     #Student's url
     path('student_dashboard/', StudentDashboardView.as_view(), name='student-dashboard'),
     path('', include(router.urls)),
     path('student_notification/', NotificationAPIView.as_view(), name='student-notification'),
+    path('student_leaderbaord', LeaderAPIView.as_view(), name='student_leaderboard'),
+    path('student/login-activity/', StudentLoginActivityAPIView.as_view(), name='student_login_activity'),
+    path('student-activity/<str:username>/', UserActivityView.as_view(), name='user-activity'),
     
     #Teacher's url
-    path('teacher_dashboard/', TeacherDashboardView.as_view(), name='teacher-dashboard'),
+    # path('teacher_dashboard/', TeacherDashboardView.as_view(), name='teacher-dashboard'),
     
     #School's url
-    path('school_dashboard/', SchoolDashboardView.as_view(), name='school-dashboard'),
+    # path('school_dashboard/', SchoolDashboardView.as_view(), name='school-dashboard'),
 ]

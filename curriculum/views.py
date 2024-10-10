@@ -36,7 +36,7 @@ class StandardListAPIView(APIView):
             }, status=status.HTTP_200_OK)
 
         except Student.DoesNotExist:
-            return Response({"error": "You don't have permission to this page."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User profile does not exist."}, status=status.HTTP_404_NOT_FOUND)
         
 class SubjectListAPIView(APIView):
     permission_classes = [IsAuthenticated] 

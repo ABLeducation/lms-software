@@ -15,16 +15,25 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 class StudentSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer()
+    profile_pic = serializers.ImageField(max_length=None, use_url=False,required=False,allow_null=True)
 
     class Meta:
         model = Student
-        fields = ("__all__")
+        fields = ['user','name','grade','section','school','profile_pic']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = CustomUser.objects.create_user(**user_data)
         student = Student.objects.create(user=user, **validated_data)
         return student
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Use the request object to build the absolute URL
+        request = self.context.get('request')
+        if request:
+            representation['profile_pic'] = request.build_absolute_uri(instance.profile_pic.url) if instance.profile_pic else None
+        return representation
 
 class TeacherSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer()
