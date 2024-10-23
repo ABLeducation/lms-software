@@ -146,7 +146,7 @@ class UserLoginTests(APITestCase):
         response = self.client.post(self.login_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('username_or_email', response.data) 
-        
+
 
 class UserActivityTests(APITestCase):
     def setUp(self):
@@ -166,9 +166,11 @@ class UserActivityTests(APITestCase):
 class StudentDashboardAPITest(APITestCase):
     
     def setUp(self):
-        # Create a user and authenticate
+        # Create a user and set them to active for testing
         self.user = CustomUser.objects.create_user(username='student1', password='password123')
-        
+        self.user.is_active = True
+        self.user.save()
+
         # Create a Standard
         self.standard = Standard.objects.create(name='8')
 
@@ -207,28 +209,215 @@ class StudentDashboardAPITest(APITestCase):
         UserLoginActivity.objects.create(login_username=self.user, login_datetime=timezone.now())
 
     def test_student_dashboard_authenticated(self):
-        # Authenticate the user
-        self.client.login(username="student1", password="password123")
-
-        # Make the API call
-        response = self.client.get(reverse('users:student-dashboard'))
+        # Authenticate the user by obtaining a token
+        login_url = reverse('users:login')
+        login_data = {
+            "username_or_email": "student1",
+            "password": "password123"
+        }
+        response = self.client.post(login_url, login_data, format='json')
+        
+        # Check if login was successful
+        print("Login response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['subjects']), 2)
+        
+        # Retrieve username from login response
+        username = response.data.get("username")
+        self.assertEqual(username, self.user.username)
+
+        # Use the username to access the student's dashboard
+        dashboard_url = reverse('users:student-dashboard', kwargs={"username": username})
+        dashboard_response = self.client.get(dashboard_url)
+        self.assertEqual(dashboard_response.status_code, status.HTTP_200_OK)
+        
+        # Check subjects
+        self.assertEqual(len(dashboard_response.data['subjects']), 2)
 
         # Check if quizzes are retrieved correctly
-        self.assertEqual(len(response.data['quizzes']), 2)
-        self.assertEqual(response.data['quizzes'][0]['quiz_name'], 'Math Quiz')
-        self.assertEqual(response.data['quizzes'][1]['quiz_name'], 'Science Quiz')
+        self.assertEqual(len(dashboard_response.data['quizzes']), 2)
+        self.assertEqual(dashboard_response.data['quizzes'][0]['quiz_name'], 'Math Quiz')
+        self.assertEqual(dashboard_response.data['quizzes'][1]['quiz_name'], 'Science Quiz')
 
         # Check if results are retrieved correctly
-        self.assertEqual(len(response.data['results']), 2)
-        self.assertEqual(response.data['results'][0]['score'], 85)
-        self.assertEqual(response.data['results'][1]['score'], 90)
+        self.assertEqual(len(dashboard_response.data['results']), 2)
+        self.assertEqual(dashboard_response.data['results'][0]['score'], 85)
+        self.assertEqual(dashboard_response.data['results'][1]['score'], 90)
+
 
     def test_student_dashboard_unauthenticated(self):
         # Make the API call without authentication
-        response = self.client.get(reverse('users:student-dashboard'))
+        dashboard_url = reverse('users:student-dashboard', kwargs={"username": "student1"})
+        response = self.client.get(dashboard_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+class StudentProfileViewSetTestCase(APITestCase):
+
+    def setUp(self):
+        # Create a user and a student profile
+        self.user = CustomUser.objects.create_user(username='testuser', password='testpassword', email='testuser@example.com')
+        self.student = Student.objects.create(user=self.user, name='Test Student', grade='5', section='A', school='Test School')
+        
+        # Log in the user
+        self.client.login(username='testuser', password='testpassword')
+
+
+    def test_fetch_student_profile(self):
+        # Fetch the student profile for the logged-in user
+        url = reverse('users:student-profile-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['name'], 'Test Student')
+
+    def test_update_student_profile(self):
+        # Update the student profile
+        url = reverse('users:student-profile-detail', kwargs={'pk': self.student.pk})
+        data = {
+            'name': 'Updated Name',
+            'grade': '6',
+            'section': 'B',
+            'school': 'Updated School'
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], 'Updated Name')
+
+    def test_partial_update_student_profile(self):
+        # Partially update the student profile
+        url = reverse('users:student-profile-detail', kwargs={'pk': self.student.pk})
+        data = {
+            'name': 'Updated Name',
+            'profile_pic': 'new_image_url'
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], 'Updated Name')
+        self.student.refresh_from_db()  # Refresh the instance to get updated values
+        self.assertEqual(self.student.grade, '5')  # Ensure the grade remains unchanged
+
+        
+    def test_update_password(self):
+        url = reverse('users:student-profile-update-password')  # Adjust the URL name accordingly
+        data = {
+            'old_password': 'testpassword',
+            'new_password': 'newpassword'
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['detail'], 'Password updated successfully.')
+
+        # Verify that the password has been updated
+        self.user.refresh_from_db()  # Refresh the user instance
+        self.assertTrue(self.user.check_password('newpassword'))
+        
+    def test_restricted_fields_update(self):
+        url = reverse('users:student-profile-detail', kwargs={'pk': self.student.pk})
+        data = {
+            'username': 'new_username',  # This should not update
+            'email': 'newemail@example.com',  # This should not update
+            'name': 'Allowed Name Update',  # This should update
+            'profile_pic': 'new_image_url'  # This should update
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify non-editable fields remain the same
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.user.username, 'testuser')
+        self.assertEqual(self.student.user.email, 'testuser@example.com')  # Should remain the same
+        self.assertEqual(self.student.name, 'Allowed Name Update')  # Should be updated
+        
+class PasswordResetTestCase(APITestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(username='testuser', password='testpass123', email='test@example.com')
+        self.password_reset_url = reverse('users:password_reset_request')
+
+    def test_password_reset_flow(self):
+        # Simulate the 'forgot password' request
+        forgot_password_data = {
+            "email": self.user.email  # Use 'email' if that's what your view expects
+        }
+        # Make a POST request to initiate password reset
+        response = self.client.post(self.password_reset_url, data=forgot_password_data, format="json")
+        # Validate response for successful email send
+        self.assertEqual(response.status_code, 200)
+
+    def test_password_reset_with_wrong_email(self):
+        # Data with incorrect email
+        forgot_password_data = {
+            "email": "wrongemail@example.com"
+        }
+        # Attempt to initiate password reset with the wrong email
+        response = self.client.post(self.password_reset_url, data=forgot_password_data, format="json")
+        # Validate response for failure due to incorrect email
+        self.assertEqual(response.status_code, 400)
+        
+# class ZoomMeetingPermissionTestCase(APITestCase):
+
+#     def setUp(self):
+#         # Create an admin user and a regular user
+#         self.admin_user = CustomUser.objects.create_user(
+#         username='adminuser', 
+#         email='adminuser@example.com', 
+#         password='adminpass', 
+#         is_staff=True
+#         )
+#         self.regular_user = CustomUser.objects.create_user(
+#             username='regularuser', 
+#             email='regularuser@example.com', 
+#             password='regularpass', 
+#             is_staff=False
+#         )
+#         # Define URL for Zoom meeting creation endpoint
+#         self.zoom_meeting_url = reverse('users:zoom_meeting_create')  # Adjust to your URL name
+
+#     def test_admin_can_create_zoom_meeting(self):
+#         # Login as admin
+#         self.client.login(username='adminuser', password='adminpass')
+        
+#         # Define meeting data
+#         meeting_data = {
+#             "topic": "test",
+#             "type": 2,  # 2 for scheduled meetings
+#             "start_time": "2021-05-10T12:10:10Z",  # Ensure the date is in the future
+#             "duration": 3,  # Use integer type for duration
+#             "settings": {
+#                 "host_video": True,  # Use boolean type
+#                 "participant_video": True,
+#                 "join_before_host": True,
+#                 "mute_upon_entry": True,
+#                 "watermark": True,
+#                 "audio": "voip",
+#                 "auto_recording": "cloud"
+#             }
+#         }
+#         # Attempt to create a Zoom meeting
+#         response = self.client.post(self.zoom_meeting_url, data=meeting_data, format='json')
+#         print("Test Response Content:", response.content)
+#         print("Response Content:", response.content) 
+#         # Assert success response
+#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+#         self.assertIn('id', response.data)
+#         self.assertIn('join_url', response.data)
+
+#     def test_regular_user_cannot_create_zoom_meeting(self):
+#         # Login as regular user
+#         self.client.login(username='regularuser', password='regularpass')
+        
+#         # Define meeting data
+#         meeting_data = {
+#             'topic': 'Test Meeting',
+#             'start_time': '2024-12-01T10:00:00Z',
+#             'duration': 30,
+#             'agenda': 'Test meeting agenda'
+#         }
+        
+#         # Attempt to create a Zoom meeting
+#         response = self.client.post(self.zoom_meeting_url, data=meeting_data, format='json')
+        
+#         # Assert forbidden response
+#         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+#         self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
+
         
 # class MacroplannerAPITest(APITestCase):
 
@@ -541,57 +730,3 @@ class StudentDashboardAPITest(APITestCase):
 #         # Assert the response status code and error message
 #         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 #         self.assertEqual(response.data['detail'], "School record not found for this user.")
-        
-class StudentProfileViewSetTestCase(APITestCase):
-
-    def setUp(self):
-        # Create a user and a student profile
-        self.user = CustomUser.objects.create_user(username='testuser', password='testpassword')
-        self.student = Student.objects.create(user=self.user, name='Test Student', grade='5', section='A', school='Test School')
-        
-        # Log in the user
-        self.client.login(username='testuser', password='testpassword')
-
-    def test_fetch_student_profile(self):
-        # Fetch the student profile for the logged-in user
-        url = reverse('users:student-profile-list')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]['name'], 'Test Student')
-
-    def test_update_student_profile(self):
-        # Update the student profile
-        url = reverse('users:student-profile-detail', kwargs={'pk': self.student.pk})
-        data = {
-            'name': 'Updated Name',
-            'grade': '6',
-            'section': 'B',
-            'school': 'Updated School'
-        }
-        response = self.client.put(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['name'], 'Updated Name')
-
-    def test_partial_update_student_profile(self):
-        # Partially update the student profile
-        url = reverse('users:student-profile-detail', kwargs={'pk': self.student.pk})
-        data = {
-            'grade': '7'
-        }
-        response = self.client.patch(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['grade'], '7')
-        
-    def test_update_password(self):
-        url = reverse('users:student-profile-update-password')  # Adjust the URL name accordingly
-        data = {
-            'old_password': 'testpassword',
-            'new_password': 'newpassword'
-        }
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['detail'], 'Password updated successfully.')
-
-        # Verify that the password has been updated
-        self.user.refresh_from_db()  # Refresh the user instance
-        self.assertTrue(self.user.check_password('newpassword'))

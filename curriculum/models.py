@@ -209,4 +209,4 @@ class UserLessonProgress(models.Model):
         verbose_name_plural = '4. User Lesson Progress'
 
     def __str__(self):
-        return f'{self.user.username} - {self.lesson.name}'         
+        return f'{self.user.username} - {self.lesson.name}'      

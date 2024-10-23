@@ -22,13 +22,15 @@ class StudentDashboardView(ListAPIView):
     serializer_class = SubjectSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        # Check if the user is authenticated
-        if not user.is_authenticated:
-            raise PermissionDenied(detail="Authentication credentials were not provided.")
+        # Get username from URL parameters
+        username = self.kwargs.get('username')
         try:
+            # Fetch the student using the provided username
+            user = CustomUser.objects.get(username=username)
             student_obj = Student.objects.get(user=user)
             grade = student_obj.grade
+        except CustomUser.DoesNotExist:
+            raise NotFound(detail=f"User with username '{username}' does not exist.")
         except Student.DoesNotExist:
             raise NotFound(detail="Student record not found for this user.")
 
@@ -45,16 +47,20 @@ class StudentDashboardView(ListAPIView):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
 
+        # Get username from URL parameters
+        username = self.kwargs.get('username')
+        user = CustomUser.objects.get(username=username)
+
         # Serialize the student's profile
-        student_profile = StudentSerializer(Student.objects.get(user=request.user),context={'request': request})
-        logs = UserLoginActivity.objects.filter(login_username=self.request.user).count()
-        
+        student_profile = StudentSerializer(Student.objects.get(user=user), context={'request': request})
+        logs = UserLoginActivity.objects.filter(login_username=user).count()
+
         # Fetch quizzes related to the student's grade
-        student_obj = Student.objects.get(user=request.user)
+        student_obj = Student.objects.get(user=user)
         quizzes = Quiz.objects.filter(grade=student_obj.grade)
         quiz_serializer = QuizSerializer(quizzes, many=True)
 
-        results = Result.objects.filter(user=self.request.user, certificate__isnull=False)
+        results = Result.objects.filter(user=user, certificate__isnull=False)
         result_serializer = ResultSerializer(results, many=True)
 
         return Response({
@@ -65,44 +71,47 @@ class StudentDashboardView(ListAPIView):
             "quizzes": quiz_serializer.data,
             "results": result_serializer.data
         })
+
         
 class StudentProfileViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
+    
+    # Use username for lookups instead of the primary key (id)
+    lookup_field = 'user__username'
 
-    # Fetch the logged-in user's profile
+    # Fetch the logged-in user's profile by username
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Student.objects.none()  
         else:
-            user = self.request.user
-            return Student.objects.filter(user=user)
+            # Access the username from the URL for lookup
+            username = self.kwargs.get('user__username', None)
+            if username:
+                return Student.objects.filter(user__username=username)
+            return Student.objects.none()
 
     # Override the update method to handle custom fields
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
 
-        customuser = instance.user
-        data = request.data
+        # Create a copy of the incoming data
+        data = request.data.copy()
 
-        # Update user fields
-        customuser.username = data.get('username', customuser.username)
-        customuser.email = data.get('email', customuser.email)
-        password = data.get('password', None)
-        if password:
-            customuser.set_password(password)
-        customuser.save()
+        # Exclude non-editable fields
+        non_editable_fields = ['username', 'email', 'grade', 'section', 'school']
+        for field in non_editable_fields:
+            data.pop(field, None)  # Remove the field if present in the request data
 
+        # Update the instance with the allowed fields
         instance.name = data.get('name', instance.name)
-        instance.grade = data.get('grade', instance.grade)
-        instance.section = data.get('section', instance.section)
-        instance.school = data.get('school', instance.school)
+        instance.profile_pic = data.get('profile_pic', instance.profile_pic)
         instance.save()
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
     @action(detail=False, methods=['post'], url_path='update-password')
     def update_password(self, request):
         user = request.user
@@ -120,8 +129,7 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
 class NotificationAPIView(APIView):
-    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
-
+    permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
         try:
             # Get the student profile linked to the logged-in user
@@ -205,7 +213,6 @@ class StudentLoginActivityAPIView(APIView):
         user = request.user
 
         try:
-            # Verify the student profile exists
             student_profile = Student.objects.get(user=user)
         except Student.DoesNotExist:
             return Response(
@@ -257,3 +264,4 @@ class UserActivityView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'No activity found for this user'}, status=status.HTTP_404_NOT_FOUND)
+        

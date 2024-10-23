@@ -7,10 +7,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('username', 'password', 'email', 'role')
-        extra_kwargs = {'password': {'write_only': True}}
+        extra_kwargs = {'password': {'write_only': False}}
 
     def create(self, validated_data):
         user = CustomUser.objects.create_user(**validated_data)
+        user.is_active = False
+        user.save()
         return user
 
 class StudentSerializer(serializers.ModelSerializer):
@@ -24,6 +26,8 @@ class StudentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = CustomUser.objects.create_user(**user_data)
+        user.is_active = False
+        user.save()
         student = Student.objects.create(user=user, **validated_data)
         return student
     
@@ -40,26 +44,49 @@ class TeacherSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = "__all__"
+        fields = ['user','name','school']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = CustomUser.objects.create_user(**user_data)
+        user.is_active = False
+        user.save()
         teacher = Teacher.objects.create(user=user, **validated_data)
         return teacher
+    
+class TeacherProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = ['mobile_num', 'subject', 'designation','grades']
+
 
 class SchoolSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer()
+    school = serializers.CharField(required=True)
 
     class Meta:
         model = School
-        fields = "__all__"
+        fields = ['user','school']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = CustomUser.objects.create_user(**user_data)
+        user.is_active = False  # User is not active until verified
+        user.save()
+
+        # Create the school entry linked to the created user
         school = School.objects.create(user=user, **validated_data)
         return school
+    
+class SchoolProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = School
+        fields = [
+            'principal_name', 'principal_number', 'principal_email',
+            'teacher_coordinator', 'teacher_coordinator_number', 'teacher_coordinator_email',
+            'account_name', 'account_email', 'accountant_number',
+            'city', 'state', 'country', 'geo_location'
+        ]
 
 class LoginSerializer(serializers.Serializer):
     username_or_email = serializers.CharField(required=True)
@@ -120,3 +147,12 @@ class NotificationStudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationStudent
         fields = '__all__'
+        
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+    def validate_email(self, value):
+        # Check if a user with this email exists in the system
+        if not CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email does not exist.")
+        return value

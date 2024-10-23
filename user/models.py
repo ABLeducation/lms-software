@@ -3,7 +3,6 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 import os
-# User=get_user_model()
 
 # Create your models here.
 class CustomUser(AbstractUser):
@@ -103,7 +102,6 @@ class School(models.Model):
     
     def __str__(self):
         return self.school
-
     
 class UserLoginActivity(models.Model):
     # Login Status

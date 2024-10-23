@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.http import JsonResponse
 from rest_framework import status
 from .serializers import *
 from django.contrib.auth import login
@@ -7,8 +8,18 @@ from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema # type: ignore
 from rest_framework import generics
 from drf_yasg import openapi # type: ignore
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from django.contrib.auth import logout
+from django.urls import reverse
+from rest_framework import viewsets
+from .utils.zoom import create_zoom_meeting
+from rest_framework.permissions import AllowAny
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import PasswordResetTokenGenerator,default_token_generator
+from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
+from django.utils.encoding import force_bytes,force_str
+from django.views.generic import View
+from django.views.decorators.csrf import csrf_exempt
 
 class RegistrationView(APIView):
     @swagger_auto_schema(
@@ -55,9 +66,31 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
+            print(f"Logged in user: {user.username}")  # Debugging line
+            if not user.is_active:
+                return Response(
+                    {"error": "Account is not active. Please contact support."}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
             login(request, user)
             token, created = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key}, status=status.HTTP_200_OK)
+
+            # Determine the dashboard URL based on user type
+            if Student.objects.filter(user=user).exists():
+                print("User is a Student")  # Debugging line
+                dashboard_url = reverse('users:student-dashboard', args=[user.username])
+            elif Teacher.objects.filter(user=user).exists():
+                print("User is a Teacher")  # Debugging line
+                dashboard_url = reverse('users:teacher-dashboard', args=[user.username])
+            else:
+                print("User is neither a Student nor a Teacher")  # Debugging line
+                dashboard_url = reverse('users:school-dashboard', args=[user.username])
+                
+            return Response({
+                "token": token.key,
+                "username": user.username,
+                "dashboard_url": dashboard_url
+            }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class UserLogoutView(APIView):
@@ -67,6 +100,52 @@ class UserLogoutView(APIView):
         # Log out the user
         logout(request)
         return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
+    
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            
+            try:
+                user = CustomUser.objects.get(email=email)
+                # Generate password reset token
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+                # Send the reset email
+                reset_link = f"http://127.0.0.1:8000/password-reset-confirm/{uid}/{token}/"
+                send_mail(
+                    subject="Password Reset Request",
+                    message=f"Use this link to reset your password: {reset_link}",
+                    from_email="content@thinnkware.com",
+                    recipient_list=[email],
+                    fail_silently=False  # Set to False to raise exceptions for debugging
+                )
+                return Response({'success': 'Password reset link sent'}, status=status.HTTP_200_OK)
+
+            except CustomUser.DoesNotExist:
+                return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request, uidb64, token):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = CustomUser.objects.get(pk=uid)
+            if not default_token_generator.check_token(user, token):
+                return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+
+            new_password = request.data.get('new_password')
+            user.set_password(new_password)
+            
+            user.save()
+            return Response({"detail": "Password has been reset successfully."}, status=status.HTTP_200_OK)
+        except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+            return Response({"detail": "Invalid token or user ID."}, status=status.HTTP_400_BAD_REQUEST)
     
 class UserLoginActivityView(APIView):
     @swagger_auto_schema(
@@ -91,6 +170,7 @@ class UserLoginActivityView(APIView):
 
         serializer = UserLoginActivitySerializer(login_activity)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
 
 
 class MacroplannerView(generics.GenericAPIView):
@@ -179,3 +259,18 @@ class AdvocacyVisitView(generics.GenericAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ZoomMeetingView(viewsets.ViewSet):
+    permission_classes = [IsAdminUser]
+
+    def create(self, request):
+        topic = request.data.get("topic")
+        start_time = request.data.get("start_time")
+        duration = request.data.get("duration")
+        host_email = request.data.get("host_email")
+
+        if not all([topic, start_time, duration, host_email]):
+            return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+
+        zoom_meeting = create_zoom_meeting(topic, start_time, duration, host_email)
+        return Response(zoom_meeting, status=status.HTTP_201_CREATED)

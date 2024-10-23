@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'user.middleware.ActivityMiddleware',
 ]
 
 ROOT_URLCONF = 'lms.urls'
@@ -154,4 +155,11 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 APPEND_SLASH=False
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# settings.py
+ZOOM_API_KEY = 'ksfAaQaTRAuuzqYwJXA1VQ'
+ZOOM_API_SECRET = '1LU3KX7isfl2PgbQnIRrbywbHIUbK62n'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# CSRF_COOKIE_SECURE = False
