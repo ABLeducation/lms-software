@@ -49,6 +49,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,7 +57,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'user.middleware.ActivityMiddleware',
 ]
 
@@ -147,19 +147,40 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
 }
 
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # React dev server
+    # "https://worm-dear-centrally.ngrok-free.app",
+    'https://75f9-122-161-67-80.ngrok-free.app'
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    # 'https://worm-dear-centrally.ngrok-free.app',
+    'https://75f9-122-161-67-80.ngrok-free.app'
+    'http://localhost:5173']
 
 APPEND_SLASH=False
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
 # settings.py
 ZOOM_API_KEY = 'ksfAaQaTRAuuzqYwJXA1VQ'
 ZOOM_API_SECRET = '1LU3KX7isfl2PgbQnIRrbywbHIUbK62n'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# CSRF_COOKIE_SECURE = False
+
+SWAGGER_SETTINGS = {
+    'USE_HTTPS': True,
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+        }
+    },
+    'schemes': ['https'],
+}

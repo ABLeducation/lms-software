@@ -76,41 +76,33 @@ class StudentDashboardView(ListAPIView):
 class StudentProfileViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
-    
-    # Use username for lookups instead of the primary key (id)
+
+    # Use 'username' for lookups, but filter through the related 'user' field
     lookup_field = 'user__username'
 
-    # Fetch the logged-in user's profile by username
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
-            return Student.objects.none()  
+            return Student.objects.none()  # For schema generation views
         else:
-            # Access the username from the URL for lookup
-            username = self.kwargs.get('user__username', None)
-            if username:
-                return Student.objects.filter(user__username=username)
-            return Student.objects.none()
+            # Filter by the 'user__username' from the URL, or use the logged-in user's username
+            username = self.kwargs.get('user__username', self.request.user.username)
+            return Student.objects.filter(user__username=username)
 
-    # Override the update method to handle custom fields
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
+    def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-
-        # Create a copy of the incoming data
         data = request.data.copy()
-
-        # Exclude non-editable fields
         non_editable_fields = ['username', 'email', 'grade', 'section', 'school']
         for field in non_editable_fields:
-            data.pop(field, None)  # Remove the field if present in the request data
+            data.pop(field, None)  # Remove non-editable fields if present in the request data
 
-        # Update the instance with the allowed fields
-        instance.name = data.get('name', instance.name)
-        instance.profile_pic = data.get('profile_pic', instance.profile_pic)
-        instance.save()
+        serializer = self.get_serializer(instance, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def update(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
 
     @action(detail=False, methods=['post'], url_path='update-password')
     def update_password(self, request):
@@ -127,6 +119,7 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
         user.save()
         
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
+    
 
 class NotificationAPIView(APIView):
     permission_classes = [IsAuthenticated]

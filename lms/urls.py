@@ -21,6 +21,7 @@ from drf_yasg.views import get_schema_view # type: ignore
 from drf_yasg import openapi # type: ignore
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework.documentation import include_docs_urls
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -30,6 +31,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    # url='https://75f9-122-161-67-80.ngrok-free.app'
 )
 
 urlpatterns = [
@@ -38,6 +40,7 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('curriculum/', include(('curriculum.urls','curriculum'), namespace='curriculum')),
     path('quiz/', include(('quiz.urls','quiz'), namespace='quiz')),
+    path(r'docs/', include_docs_urls(title='LMS API')),
 ] 
 
 urlpatterns+= static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
