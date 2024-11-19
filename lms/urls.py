@@ -40,7 +40,6 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('curriculum/', include(('curriculum.urls','curriculum'), namespace='curriculum')),
     path('quiz/', include(('quiz.urls','quiz'), namespace='quiz')),
-    path(r'docs/', include_docs_urls(title='LMS API')),
 ] 
 
 urlpatterns+= static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
