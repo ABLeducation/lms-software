@@ -16,6 +16,9 @@ from quiz.serializers import QuizSerializer,ResultSerializer
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max
 from django.db.models import OuterRef, Subquery
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.files.base import ContentFile
+import base64
 
 class StudentDashboardView(ListAPIView):
     permission_classes = [IsAuthenticated]
@@ -119,6 +122,45 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
         user.save()
         
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'], url_path='update-avatar')
+    def update_avatar(self, request, user__username=None):
+        instance = self.get_object()
+        avatar_choice = request.data.get('avatar_choice')  # Expect the avatar name/key
+        
+        # Define predefined avatar options (add more as needed)
+        predefined_avatars = {
+            "avatar1": os.path.join(settings.MEDIA_ROOT, "avatars/av_1.png"),
+            "avatar2": os.path.join(settings.MEDIA_ROOT, "avatars/av_2.png"),
+            "avatar3": os.path.join(settings.MEDIA_ROOT, "avatars/av_3.png"),
+            "avatar4": os.path.join(settings.MEDIA_ROOT, "avatars/av_4.png"),
+            "avatar5": os.path.join(settings.MEDIA_ROOT, "avatars/av_5.png"),
+            "avatar6": os.path.join(settings.MEDIA_ROOT, "avatars/av_6.png"),
+            "avatar7": os.path.join(settings.MEDIA_ROOT, "avatars/av_7.png"),
+            "avatar8": os.path.join(settings.MEDIA_ROOT, "avatars/av_8.png"),
+            "avatar9": os.path.join(settings.MEDIA_ROOT, "avatars/av_9.png"),
+            "avatar10": os.path.join(settings.MEDIA_ROOT, "avatars/av_10.png"),
+            "avatar11": os.path.join(settings.MEDIA_ROOT, "avatars/av_11.png"),
+            "avatar12": os.path.join(settings.MEDIA_ROOT, "avatars/av_12.png"),
+            "avatar13": os.path.join(settings.MEDIA_ROOT, "avatars/av_13.png"),
+            "avatar14": os.path.join(settings.MEDIA_ROOT, "avatars/av_14.png"),
+            "avatar15": os.path.join(settings.MEDIA_ROOT, "avatars/av_15.png"),
+        }
+
+        if avatar_choice not in predefined_avatars:
+            return Response({"detail": "Invalid avatar choice."}, status=status.HTTP_400_BAD_REQUEST)
+
+        avatar_path = predefined_avatars[avatar_choice]
+        if not os.path.exists(avatar_path):
+            return Response({"detail": f"Avatar file '{avatar_choice}' not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        with open(avatar_path, "rb") as avatar_file:
+            avatar_content = avatar_file.read()
+
+        instance.profile_pic.save(f"{avatar_choice}.png", ContentFile(avatar_content))
+        instance.save()
+
+        return Response({"detail": "Profile picture updated successfully."}, status=status.HTTP_200_OK)
     
 
 class NotificationAPIView(APIView):
@@ -256,5 +298,4 @@ class UserActivityView(APIView):
             serializer = UserActivitySerializer(user_activities, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'error': 'No activity found for this user'}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response({'error': 'No activity found for this user'}, status=status.HTTP_404_NOT_FOUND)                         

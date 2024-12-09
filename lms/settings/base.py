@@ -81,17 +81,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'lms.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -151,36 +140,11 @@ REST_FRAMEWORK = {
 }
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # React dev server
-    # "https://worm-dear-centrally.ngrok-free.app",
-    'https://75f9-122-161-67-80.ngrok-free.app'
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    # 'https://worm-dear-centrally.ngrok-free.app',
-    'https://75f9-122-161-67-80.ngrok-free.app'
-    'http://localhost:5173']
 
 APPEND_SLASH=False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
-# settings.py
-ZOOM_API_KEY = 'ksfAaQaTRAuuzqYwJXA1VQ'
-ZOOM_API_SECRET = '1LU3KX7isfl2PgbQnIRrbywbHIUbK62n'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-SWAGGER_SETTINGS = {
-    'USE_HTTPS': True,
-    'SECURITY_DEFINITIONS': {
-        'Bearer': {
-            'type': 'apiKey',
-            'name': 'Authorization',
-            'in': 'header',
-        }
-    },
-    'schemes': ['https'],
-}

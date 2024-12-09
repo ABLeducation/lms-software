@@ -21,12 +21,11 @@ from django.views.generic import View
 from django.views.decorators.csrf import csrf_exempt
 
 class RegistrationView(APIView):
-    @swagger_auto_schema(
-        request_body=SchoolSerializer,  # Use a single serializer
-        responses={201: SchoolSerializer, 400: 'Bad Request'}
-    )
+    # @swagger_auto_schema(
+    #     request_body=SchoolSerializer,  # Use a single serializer
+    #     responses={201: SchoolSerializer, 400: 'Bad Request'}
+    # )
     def post(self, request, *args, **kwargs):
-        print("Received data:", request.data)  # Print the entire data received
         
         user_data = request.data
         # Extract user details from the request
@@ -36,7 +35,6 @@ class RegistrationView(APIView):
             return Response({'error': 'Invalid user data format'}, status=status.HTTP_400_BAD_REQUEST)
 
         role = user_info.get('role')
-        print("Role:", role)
 
         # Prepare data for the correct serializer
         if role == 'student':
@@ -52,12 +50,12 @@ class RegistrationView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            print("Serializer errors:", serializer.errors)  # Print errors if serializer is invalid
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         
 class LoginView(APIView):
     @swagger_auto_schema(
+        
         request_body=LoginSerializer,
         responses={200: 'Token', 400: 'Bad Request'}
     )
@@ -65,7 +63,6 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
-            print(f"Logged in user: {user.username}")  # Debugging line
             if not user.is_active:
                 return Response(
                     {"error": "Account is not active. Please contact support."}, 
@@ -76,13 +73,10 @@ class LoginView(APIView):
 
             # Determine the dashboard URL based on user type
             if Student.objects.filter(user=user).exists():
-                print("User is a Student")  # Debugging line
                 dashboard_url = reverse('users:student-dashboard', args=[user.username])
             elif Teacher.objects.filter(user=user).exists():
-                print("User is a Teacher")  # Debugging line
                 dashboard_url = reverse('users:teacher-dashboard', args=[user.username])
             else:
-                print("User is neither a Student nor a Teacher")  # Debugging line
                 dashboard_url = reverse('users:school-dashboard', args=[user.username])
                 
             return Response({
@@ -147,10 +141,10 @@ class PasswordResetConfirmView(APIView):
             return Response({"detail": "Invalid token or user ID."}, status=status.HTTP_400_BAD_REQUEST)
     
 class UserLoginActivityView(APIView):
-    @swagger_auto_schema(
-        request_body=UserLoginActivitySerializer,
-        responses={201: UserLoginActivitySerializer, 400: 'Bad Request'}
-    )
+    # @swagger_auto_schema(
+    #     request_body=UserLoginActivitySerializer,
+    #     responses={201: UserLoginActivitySerializer, 400: 'Bad Request'}
+    # )
     def post(self, request):
         # Retrieve data from request
         login_ip = request.META.get('REMOTE_ADDR')
@@ -175,10 +169,10 @@ class UserLoginActivityView(APIView):
 class MacroplannerView(generics.GenericAPIView):
     serializer_class = MacroplannerSerializer
 
-    @swagger_auto_schema(
-        manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
-        responses={200: MacroplannerSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
-    )
+    # @swagger_auto_schema(
+    #     manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
+    #     responses={200: MacroplannerSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
+    # )
     def get(self, request, school_name=None):
         if school_name:
             macroplanner = Macroplanner.objects.filter(school=school_name)
@@ -204,10 +198,10 @@ class MacroplannerView(generics.GenericAPIView):
 class MicroplannerView(generics.GenericAPIView):
     serializer_class = MicroplannerSerializer
 
-    @swagger_auto_schema(
-        manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
-        responses={200: MicroplannerSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
-    )
+    # @swagger_auto_schema(
+    #     manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
+    #     responses={200: MicroplannerSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
+    # )
     def get(self, request, school_name=None):
         if school_name:
             microplanner = Microplanner.objects.filter(school=school_name)
@@ -233,10 +227,10 @@ class MicroplannerView(generics.GenericAPIView):
 class AdvocacyVisitView(generics.GenericAPIView):
     serializer_class = AdvocacyVisitSerializer
 
-    @swagger_auto_schema(
-        manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
-        responses={200: AdvocacyVisitSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
-    )
+    # @swagger_auto_schema(
+    #     manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
+    #     responses={200: AdvocacyVisitSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
+    # )
     def get(self, request, school_name=None):
         if school_name:
             queryset = AdvocacyVisit.objects.filter(school=school_name)

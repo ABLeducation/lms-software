@@ -8,6 +8,9 @@ from datetime import date
 from curriculum.models import Standard,Subject
 from django.core.files.uploadedfile import SimpleUploadedFile
 from quiz.models import Quiz,Result
+from django.test import TestCase
+from io import BytesIO
+from django.conf import settings
 
 @pytest.mark.django_db
 def test_register_student(client):
@@ -250,83 +253,87 @@ class StudentDashboardAPITest(APITestCase):
         response = self.client.get(dashboard_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
-# class StudentProfileViewSetTestCase(APITestCase):
+class StudentProfileUpdateAvatarTests(TestCase):
+    def setUp(self):
+        # Create a test user
+        self.user = CustomUser.objects.create_user(username="testuser", password="testpass123")
+        # Create a student profile
+        self.student = Student.objects.create(
+            user=self.user,
+            name="Test Student",
+            grade="10",
+            section="A",
+            school="Test School"
+        )
+        # Set up the client
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
 
-#     def setUp(self):
-#         # Create a user and a student profile
-#         self.user = CustomUser.objects.create_user(username='testuser', password='testpassword', email='testuser@example.com')
-#         self.student = Student.objects.create(user=self.user, name='Test Student', grade='5', section='A', school='Test School')
-        
-#         # Log in the user
-#         self.client.login(username='testuser', password='testpassword')
+        # Create dummy avatar files in the media folder
+        self.avatar_folder = os.path.join(settings.MEDIA_ROOT, "avatars")
+        os.makedirs(self.avatar_folder, exist_ok=True)
+        self.avatar_files = [
+            "av_1.png", "av_2.png", "av_3.png", "av_4.png", "av_5.png",
+        ]
+        for avatar in self.avatar_files:
+            with open(os.path.join(self.avatar_folder, avatar), "wb") as f:
+                f.write(BytesIO(b"Test Image Content").getbuffer())
 
+    def tearDown(self):
+        # Clean up the test avatars
+        for avatar in self.avatar_files:
+            path = os.path.join(self.avatar_folder, avatar)
+            if os.path.exists(path):
+                os.remove(path)
 
-#     def test_fetch_student_profile(self):
-#         url = reverse('users:student-profile-list')
-#         response = self.client.get(url)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-#         # Check if data is returned
-#         self.assertTrue(len(response.data) > 0, "No student profile data returned")
-#         self.assertEqual(response.data[0]['name'], 'Test Student')
+        if os.path.exists(self.avatar_folder):
+            os.rmdir(self.avatar_folder)
 
-#     def test_update_student_profile(self):
-#         # Update the student profile
-#         url = reverse('users:student-profile-detail', kwargs={'user__username': self.user.username})
-#         data = {
-#             'name': 'Updated Name',
-#             'grade': '6',
-#             'section': 'B',
-#             'school': 'Updated School'
-#         }
-#         response = self.client.put(url, data, format='json')
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         self.assertEqual(response.data['name'], 'Updated Name')
+    def test_update_avatar_success(self):
+        """Test successfully updating the profile picture with a predefined avatar."""
+        response = self.client.post(
+            f"/student/{self.user.username}/update-avatar/",
+            {"avatar_choice": "avatar1"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("detail", response.data)
+        self.assertEqual(response.data["detail"], "Profile picture updated successfully.")
 
-#     def test_partial_update_student_profile(self):
-#         # Mock image file
-#         mock_image = SimpleUploadedFile("profile_pic.jpg", b"file_content", content_type="image/jpeg")
+        # Verify the profile picture was updated
+        self.student.refresh_from_db()
+        self.assertTrue(self.student.profile_pic.name.endswith("avatar1.png"))
 
-#         url = reverse('users:student-profile-detail', kwargs={'user__username': self.user.username})
-#         data = {
-#             'name': 'Updated Name',
-#             'profile_pic': mock_image  # Provide the mock image
-#         }
-#         response = self.client.patch(url, data, format='multipart')  # Use 'multipart' for file uploads
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         self.assertEqual(response.data['name'], 'Updated Name')
+    def test_update_avatar_invalid_choice(self):
+        """Test providing an invalid avatar choice."""
+        response = self.client.post(
+            f"/student/{self.user.username}/update-avatar/",
+            {"avatar_choice": "invalid_avatar"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("detail", response.data)
+        self.assertEqual(response.data["detail"], "Invalid avatar choice.")
 
-        
-#     def test_update_password(self):
-#         url = reverse('users:student-profile-update-password')  # Adjust the URL name accordingly
-#         data = {
-#             'old_password': 'testpassword',
-#             'new_password': 'newpassword'
-#         }
-#         response = self.client.post(url, data, format='json')
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         self.assertEqual(response.data['detail'], 'Password updated successfully.')
+    def test_update_avatar_missing_file(self):
+        """Test updating avatar when the file for the avatar choice is missing."""
+        # Remove one of the test avatars to simulate missing file
+        os.remove(os.path.join(self.avatar_folder, "av_1.png"))
 
-#         # Verify that the password has been updated
-#         self.user.refresh_from_db()  # Refresh the user instance
-#         self.assertTrue(self.user.check_password('newpassword'))
-        
-#     def test_restricted_fields_update(self):
-#         url = reverse('users:student-profile-detail', kwargs={'user__username': self.user.username})
-#         data = {
-#             'username': 'new_username',  # This should not update
-#             'email': 'newemail@example.com',  # This should not update
-#             'name': 'Allowed Name Update',  # This should update
-#             'profile_pic': 'new_image_url'  # This should update
-#         }
-#         response = self.client.put(url, data, format='json')
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.post(
+            f"/student/{self.user.username}/update-avatar/",
+            {"avatar_choice": "avatar1"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("detail", response.data)
+        self.assertEqual(response.data["detail"], "Avatar file 'avatar1' not found.")
 
-#         # Verify non-editable fields remain the same
-#         self.student.refresh_from_db()
-#         self.assertEqual(self.student.user.username, 'testuser')
-#         self.assertEqual(self.student.user.email, 'testuser@example.com')  # Should remain the same
-#         self.assertEqual(self.student.name, 'Allowed Name Update')  # Should be updated
+    def test_unauthorized_update_avatar(self):
+        """Test updating avatar without authentication."""
+        self.client.logout()
+        response = self.client.post(
+            f"/student/{self.user.username}/update-avatar/",
+            {"avatar_choice": "avatar1"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         
 class PasswordResetTestCase(APITestCase):
     def setUp(self):
