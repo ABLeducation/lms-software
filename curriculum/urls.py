@@ -7,4 +7,5 @@ urlpatterns = [
     path('<slug:slug>/', SubjectListAPIView.as_view(), name='subject_list'),
     path('<str:standard>/<slug:slug>/', LessonListAPIView.as_view(), name='lesson_list'),
     path('<str:standard>/<str:subject>/<slug:slug>/', LessonDetailAPIView.as_view(), name='lesson_detail'),
+    path('lesson-access-reports/', LessonAccessReportAPIView.as_view(), name='lesson_access_reports'),
 ]

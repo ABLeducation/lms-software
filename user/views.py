@@ -19,12 +19,13 @@ from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
 from django.utils.encoding import force_bytes,force_str
 from django.views.generic import View
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 class RegistrationView(APIView):
-    # @swagger_auto_schema(
-    #     request_body=SchoolSerializer,  # Use a single serializer
-    #     responses={201: SchoolSerializer, 400: 'Bad Request'}
-    # )
+    @swagger_auto_schema(
+        request_body=SchoolSerializer,  # Use a single serializer
+        responses={201: SchoolSerializer, 400: 'Bad Request'}
+    )
     def post(self, request, *args, **kwargs):
         
         user_data = request.data
@@ -89,8 +90,12 @@ class LoginView(APIView):
 class UserLogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
+    #only for development, have to remove in production
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def post(self, request):
-        # Log out the user
         logout(request)
         return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
     
@@ -141,10 +146,10 @@ class PasswordResetConfirmView(APIView):
             return Response({"detail": "Invalid token or user ID."}, status=status.HTTP_400_BAD_REQUEST)
     
 class UserLoginActivityView(APIView):
-    # @swagger_auto_schema(
-    #     request_body=UserLoginActivitySerializer,
-    #     responses={201: UserLoginActivitySerializer, 400: 'Bad Request'}
-    # )
+    @swagger_auto_schema(
+        request_body=UserLoginActivitySerializer,
+        responses={201: UserLoginActivitySerializer, 400: 'Bad Request'}
+    )
     def post(self, request):
         # Retrieve data from request
         login_ip = request.META.get('REMOTE_ADDR')
@@ -163,16 +168,15 @@ class UserLoginActivityView(APIView):
 
         serializer = UserLoginActivitySerializer(login_activity)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
 
 
 class MacroplannerView(generics.GenericAPIView):
     serializer_class = MacroplannerSerializer
 
-    # @swagger_auto_schema(
-    #     manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
-    #     responses={200: MacroplannerSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
-    # )
+    @swagger_auto_schema(
+        manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
+        responses={200: MacroplannerSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
+    )
     def get(self, request, school_name=None):
         if school_name:
             macroplanner = Macroplanner.objects.filter(school=school_name)
@@ -198,10 +202,10 @@ class MacroplannerView(generics.GenericAPIView):
 class MicroplannerView(generics.GenericAPIView):
     serializer_class = MicroplannerSerializer
 
-    # @swagger_auto_schema(
-    #     manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
-    #     responses={200: MicroplannerSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
-    # )
+    @swagger_auto_schema(
+        manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
+        responses={200: MicroplannerSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
+    )
     def get(self, request, school_name=None):
         if school_name:
             microplanner = Microplanner.objects.filter(school=school_name)
@@ -227,10 +231,10 @@ class MicroplannerView(generics.GenericAPIView):
 class AdvocacyVisitView(generics.GenericAPIView):
     serializer_class = AdvocacyVisitSerializer
 
-    # @swagger_auto_schema(
-    #     manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
-    #     responses={200: AdvocacyVisitSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
-    # )
+    @swagger_auto_schema(
+        manual_parameters=[openapi.Parameter('school_name', openapi.IN_QUERY, description="School Name", type=openapi.TYPE_STRING)],
+        responses={200: AdvocacyVisitSerializer(many=True), 404: 'Not Found', 400: 'Bad Request'}
+    )
     def get(self, request, school_name=None):
         if school_name:
             queryset = AdvocacyVisit.objects.filter(school=school_name)

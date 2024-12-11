@@ -30,8 +30,7 @@ schema_view = get_schema_view(
         description="Backend API documentation",
     ),
     public=True,
-    permission_classes=(permissions.AllowAny,),
-    # url='https://75f9-122-161-67-80.ngrok-free.app'
+    url='https://credible-becoming-spider.ngrok-free.app',
 )
 
 urlpatterns = [
