@@ -16,6 +16,10 @@ class ActivityMiddleware:
         if request.user.is_authenticated:
             current_time = timezone.now()
             curriculum_pattern = re.compile(r'^/curriculum/\d+/[^/]+/(?P<lesson_name>[\w-]+)/$')
+            video_pattern = re.compile(r'^/curriculum/\d+/[^/]+/(?P<lesson_name>[\w-]+)/video/$')
+            content_pattern = re.compile(r'^/curriculum/\d+/[^/]+/(?P<lesson_name>[\w-]+)/content/$')
+            quiz_pattern = re.compile(r'^/curriculum/\d+/[^/]+/(?P<lesson_name>[\w-]+)/quiz/$')
+
 
             try:
                 last_activity_str = request.session.get('last_activity', None)
@@ -39,7 +43,7 @@ class ActivityMiddleware:
 
                         if last_login_activity:
                             last_login_activity.logout_time = current_time
-                            last_login_activity.total_time_spent = current_time - last_login_activity.login_time
+                            last_login_activity.time_spent = current_time - last_login_activity.login_time
                             last_login_activity.save()
                         else:
                             logger.warning(f'No active login activity found for user: {request.user.username}')
@@ -64,6 +68,46 @@ class ActivityMiddleware:
                         )
                     else:
                         logger.info(f'Non-lesson page visited: {request.path}')
+                        
+                # Record specific activity types
+                elif video_pattern.match(request.path):
+                    match = video_pattern.match(request.path)
+                    lesson_name = match.group('lesson_name') if match else None
+
+                    if lesson_name:
+                        time_spent = current_time - last_activity if last_activity else timedelta(seconds=0)
+                        UserActivity1.objects.create(
+                            user=request.user,
+                            date=current_time,
+                            page_visited=lesson_name,
+                            video_time_spent=time_spent
+                        )
+
+                elif content_pattern.match(request.path):
+                    match = content_pattern.match(request.path)
+                    lesson_name = match.group('lesson_name') if match else None
+
+                    if lesson_name:
+                        time_spent = current_time - last_activity if last_activity else timedelta(seconds=0)
+                        UserActivity1.objects.create(
+                            user=request.user,
+                            date=current_time,
+                            page_visited=lesson_name,
+                            content_time_spent=time_spent
+                        )
+
+                elif quiz_pattern.match(request.path):
+                    match = quiz_pattern.match(request.path)
+                    lesson_name = match.group('lesson_name') if match else None
+
+                    if lesson_name:
+                        time_spent = current_time - last_activity if last_activity else timedelta(seconds=0)
+                        UserActivity1.objects.create(
+                            user=request.user,
+                            date=current_time,
+                            page_visited=lesson_name,
+                            quiz_time_spent=time_spent
+                        )
 
                 request.session['last_activity'] = current_time.isoformat()
                 request.session['last_page_visited'] = request.path

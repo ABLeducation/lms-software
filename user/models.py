@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 import os
+from datetime import timedelta
 
 # Create your models here.
 class CustomUser(AbstractUser):
@@ -156,6 +157,9 @@ class UserActivity1(models.Model):
     page_visited = models.CharField(max_length=255)
     curriculum_time_spent = models.DurationField(null=True, blank=True)
     time_spent = models.DurationField(null=True, blank=True)
+    video_time_spent = models.DurationField(default=timedelta, null=True, blank=True)
+    content_time_spent = models.DurationField(default=timedelta, null=True, blank=True)
+    quiz_time_spent = models.DurationField(default=timedelta, null=True, blank=True)
     
     class Meta:
         verbose_name = 'User Acess Report'

@@ -210,16 +210,3 @@ class UserLessonProgress(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.lesson.name}'      
-    
-class LessonAccessReport(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    lesson = models.ForeignKey('Lesson', on_delete=models.CASCADE)
-    video_time_spent = models.DurationField(null=True,blank=True)  # Time spent on the video
-    hint_time_spent = models.DurationField(null=True,blank=True)  # Time spent on the hint
-    content_time_spent = models.DurationField(null=True,blank=True)  # Time spent on the lesson content
-    completed = models.BooleanField(default=False)  # Mark as completed
-    accessed_at = models.DateTimeField(auto_now_add=True)  # Time of access
-    updated_at = models.DateTimeField(auto_now=True)  # Last updated time
-
-    def __str__(self):
-        return f"{self.user.username} - {self.lesson.name}"
