@@ -52,11 +52,9 @@ class RegistrationView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        
+   
 class LoginView(APIView):
     @swagger_auto_schema(
-        
         request_body=LoginSerializer,
         responses={200: 'Token', 400: 'Bad Request'}
     )
@@ -83,7 +81,8 @@ class LoginView(APIView):
             return Response({
                 "token": token.key,
                 "username": user.username,
-                "dashboard_url": dashboard_url
+                "dashboard_url": dashboard_url,
+                "role":user.role
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

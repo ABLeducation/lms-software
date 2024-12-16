@@ -138,21 +138,12 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
 }
 
 APPEND_SLASH=False
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = True
-SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+# CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOWED_ORIGINS = True
 
-CORS_ALLOWED_ORIGINS = [
-    'https://credible-becoming-spider.ngrok-free.app',
-    'http://localhost:5173'
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://credible-becoming-spider.ngrok-free.app'
-]
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

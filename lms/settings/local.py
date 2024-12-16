@@ -29,3 +29,16 @@ SWAGGER_SETTINGS = {
     },
     'schemes': ['https'],
 }
+
+CORS_ALLOWED_ORIGINS = [
+    'https://credible-becoming-spider.ngrok-free.app',
+    'http://localhost:5173'
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://credible-becoming-spider.ngrok-free.app',
+    'http://localhost:5173',
+]
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+CSRF_COOKIE_SECURE = True
+SameSite=None
