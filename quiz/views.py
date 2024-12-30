@@ -9,11 +9,42 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from .utils import generate_certificate
+from .utils import generate_certificate,generate_questions_and_answers_using_ai
 from rest_framework import status
-
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
+
+class GenerateQuizQuestionsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            quiz = Quiz.objects.get(pk=pk)
+        except Quiz.DoesNotExist:
+            return Response({"error": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        questions = generate_questions_and_answers_using_ai(quiz.quiz_name, quiz.no_of_questions, quiz.topic)
+
+        if not questions:
+            return Response(
+                {"error": "Failed to generate questions using AI. Please try again later."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        for question_data in questions:
+            question = Question.objects.create(
+                quiz=quiz,
+                question=question_data["question"]
+            )
+            for answer_text in question_data["answers"]:
+                Answer.objects.create(
+                    question=question,
+                    answer=answer_text,
+                    correct=(answer_text == question_data["correct"])
+                )
+
+        return Response({"message": "Questions generated and saved successfully."}, status=status.HTTP_201_CREATED)
+
 
 class QuizListAPIView(ListAPIView):
     serializer_class = QuizSerializer

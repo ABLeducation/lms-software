@@ -90,9 +90,9 @@ class UserLogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     #only for development, have to remove in production
-    @method_decorator(csrf_exempt)
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
+    # @method_decorator(csrf_exempt)
+    # def dispatch(self, *args, **kwargs):
+    #     return super().dispatch(*args, **kwargs)
 
     def post(self, request):
         logout(request)
@@ -152,7 +152,7 @@ class UserLoginActivityView(APIView):
     def post(self, request):
         # Retrieve data from request
         login_ip = request.META.get('REMOTE_ADDR')
-        user_agent_info = request.META.get('HTTP_USER_AGENT', 'unknown')  # Fallback to 'unknown' if not provided
+        user_agent_info = request.META.get('HTTP_USER_AGENT', 'unknown')  #Fallback to 'unknown' if not provided
         login_username = request.data.get('username')
         login_status = request.data.get('status', 'S')
 
@@ -162,7 +162,7 @@ class UserLoginActivityView(APIView):
             login_datetime=timezone.now(),
             login_username=login_username,
             status=login_status,
-            user_agent_info=user_agent_info  # Ensure this is not null
+            user_agent_info=user_agent_info  #Ensure this is not null
         )
 
         serializer = UserLoginActivitySerializer(login_activity)

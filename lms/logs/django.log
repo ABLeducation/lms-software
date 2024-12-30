@@ -1,0 +1,161 @@
+WARNING 2024-12-16 09:15:14,758 log Forbidden: /curriculum/7/
+WARNING 2024-12-16 09:15:14,759 basehttp "POST /curriculum/7/ HTTP/1.1" 403 45
+WARNING 2024-12-16 10:49:30,177 log Bad Request: /password-reset/
+WARNING 2024-12-16 10:49:30,179 basehttp "POST /password-reset/ HTTP/1.1" 400 37
+ERROR 2024-12-18 09:44:49,464 log Internal Server Error: /quiz/1/generate/
+Traceback (most recent call last):
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/mnt/c/Users/admin/Desktop/LMS/lms/quiz/views.py", line 31, in post
+    generated_data = generate_questions_and_answers_using_ai(topic, num_questions)
+  File "/mnt/c/Users/admin/Desktop/LMS/lms/quiz/utils.py", line 63, in generate_questions_and_answers_using_ai
+    response = openai.Completion.create(
+  File "/home/sahil/.local/lib/python3.10/site-packages/openai/lib/_old_api.py", line 39, in __call__
+    raise APIRemovedInV1(symbol=self._symbol)
+openai.lib._old_api.APIRemovedInV1: 
+
+You tried to access openai.Completion, but this is no longer supported in openai>=1.0.0 - see the README at https://github.com/openai/openai-python for the API.
+
+You can run `openai migrate` to automatically upgrade your codebase to use the 1.0.0 interface. 
+
+Alternatively, you can pin your installation to the old version, e.g. `pip install openai==0.28`
+
+A detailed migration guide is available here: https://github.com/openai/openai-python/discussions/742
+
+ERROR 2024-12-18 09:44:49,740 basehttp "POST /quiz/1/generate/ HTTP/1.1" 500 20104
+ERROR 2024-12-18 09:52:41,083 log Internal Server Error: /quiz/1/generate/
+Traceback (most recent call last):
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/mnt/c/Users/admin/Desktop/LMS/lms/quiz/views.py", line 31, in post
+    generated_data = generate_questions_and_answers_using_ai(topic, num_questions)
+TypeError: generate_questions_and_answers_using_ai() missing 1 required positional argument: 'topic'
+ERROR 2024-12-18 09:52:41,096 basehttp "POST /quiz/1/generate/ HTTP/1.1" 500 19048
+WARNING 2024-12-18 10:06:58,692 log Not Found: /serviceworker.js
+WARNING 2024-12-18 10:06:58,826 basehttp "GET /serviceworker.js HTTP/1.1" 404 10446
+ERROR 2024-12-18 10:09:16,015 log Internal Server Error: /quiz/1/generate/
+Traceback (most recent call last):
+  File "/mnt/c/Users/admin/Desktop/LMS/lms/quiz/utils.py", line 77, in generate_questions_and_answers_using_ai
+    response = openai.ChatCompletion.create(
+  File "/home/sahil/.local/lib/python3.10/site-packages/openai/lib/_old_api.py", line 39, in __call__
+    raise APIRemovedInV1(symbol=self._symbol)
+openai.lib._old_api.APIRemovedInV1: 
+
+You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0 - see the README at https://github.com/openai/openai-python for the API.
+
+You can run `openai migrate` to automatically upgrade your codebase to use the 1.0.0 interface. 
+
+Alternatively, you can pin your installation to the old version, e.g. `pip install openai==0.28`
+
+A detailed migration guide is available here: https://github.com/openai/openai-python/discussions/742
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/mnt/c/Users/admin/Desktop/LMS/lms/quiz/views.py", line 31, in post
+    generated_data = generate_questions_and_answers_using_ai(quiz.quiz_name, num_questions, topic)
+  File "/mnt/c/Users/admin/Desktop/LMS/lms/quiz/utils.py", line 100, in generate_questions_and_answers_using_ai
+    except openai.error.OpenAIError as e:
+AttributeError: module 'openai' has no attribute 'error'
+ERROR 2024-12-18 10:09:16,076 basehttp "POST /quiz/1/generate/ HTTP/1.1" 500 19972
+ERROR 2024-12-18 10:12:41,289 log Internal Server Error: /quiz/1/generate/
+Traceback (most recent call last):
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/mnt/c/Users/admin/Desktop/LMS/lms/quiz/views.py", line 34, in post
+    for index, qa in enumerate(generated_data, start=1):
+TypeError: 'NoneType' object is not iterable
+ERROR 2024-12-18 10:12:41,401 basehttp "POST /quiz/1/generate/ HTTP/1.1" 500 18910
+ERROR 2024-12-18 10:16:41,074 log Internal Server Error: /quiz/1/generate/
+Traceback (most recent call last):
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/home/sahil/.local/lib/python3.10/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/mnt/c/Users/admin/Desktop/LMS/lms/quiz/views.py", line 28, in post
+    questions = generate_questions_and_answers_using_ai(quiz.name, quiz.no_of_questions, quiz.topic)
+AttributeError: 'Quiz' object has no attribute 'name'
+ERROR 2024-12-18 10:16:41,472 basehttp "POST /quiz/1/generate/ HTTP/1.1" 500 18972
+ERROR 2024-12-18 10:17:04,922 log Internal Server Error: /quiz/1/generate/
+ERROR 2024-12-18 10:17:04,923 basehttp "POST /quiz/1/generate/ HTTP/1.1" 500 74
+ERROR 2024-12-18 10:20:06,888 log Internal Server Error: /quiz/2/generate/
+ERROR 2024-12-18 10:20:06,889 basehttp "POST /quiz/2/generate/ HTTP/1.1" 500 74
+ERROR 2024-12-18 10:25:20,711 log Internal Server Error: /quiz/2/generate/
+ERROR 2024-12-18 10:25:20,714 basehttp "POST /quiz/2/generate/ HTTP/1.1" 500 74
+ERROR 2024-12-18 10:25:31,611 log Internal Server Error: /quiz/2/generate/
+ERROR 2024-12-18 10:25:31,613 basehttp "POST /quiz/2/generate/ HTTP/1.1" 500 74
+ERROR 2024-12-18 10:26:59,213 log Internal Server Error: /quiz/2/generate/
+ERROR 2024-12-18 10:26:59,214 basehttp "POST /quiz/2/generate/ HTTP/1.1" 500 74
+ERROR 2024-12-19 05:54:32,700 log Internal Server Error: /quiz/2/generate/
+ERROR 2024-12-19 05:54:32,706 basehttp "POST /quiz/2/generate/ HTTP/1.1" 500 74

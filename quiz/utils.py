@@ -6,6 +6,7 @@ from reportlab.lib.pagesizes import letter # type: ignore
 from reportlab.pdfgen import canvas # type: ignore
 from pypdf import PdfReader,PdfWriter # type: ignore
 from user.models import Student
+import openai # type: ignore
 
 def generate_certificate(user, quiz, score, passed, date_attempted):
     # Select the template based on whether the user passed or failed the quiz
@@ -50,3 +51,57 @@ def generate_certificate(user, quiz, score, passed, date_attempted):
     # Create a ContentFile for saving
     filename = f"{user.username}_{quiz.quiz_name}_certificate.pdf"
     return ContentFile(final_buffer.getvalue(), filename)
+
+# Set up your OpenAI API Key (for example, in your settings.py)
+openai.api_key = settings.OPENAI_API_KEY  # Store your key securely
+
+def generate_questions_and_answers_using_ai(quiz_name, no_of_questions, topic):
+    # Use ChatCompletion instead of Completion
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are an educational AI assistant. Generate a quiz with "
+                f"{no_of_questions} questions and their answers based on the topic '{topic}'. "
+                "Provide each question as a key and its correct answer as the value in JSON format."
+            ),
+        },
+        {
+            "role": "user",
+            "content": f"Generate {no_of_questions} questions for a quiz named '{quiz_name}' on the topic '{topic}'.",
+        },
+    ]
+    
+    questions = []
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            max_tokens=1000,
+            temperature=0.7,
+        )
+        
+         # Log the raw response for debugging
+        print("OpenAI Response:", response)
+        # Extract the response content
+        generated_text = response['choices'][0]['message']['content']
+        print("Generated Text:", generated_text)
+        # generated_text = response['choices'][0]['text']
+        for q_and_a in generated_text.split("\n\n"):
+            if not q_and_a.strip():
+                continue
+            question_part, *answers_part = q_and_a.split("\n")
+            question = question_part.split(": ", 1)[-1]
+            answers = []
+            correct_answer = None
+            for answer in answers_part:
+                if answer.startswith("*"):  # Indicating the correct answer
+                    correct_answer = answer.strip("* ").strip()
+                    answers.append(correct_answer)
+                else:
+                    answers.append(answer.strip())
+            questions.append({"question": question, "answers": answers, "correct": correct_answer})
+    except openai.OpenAIError as e:
+        print(f"Error with OpenAI API: {e}")
+        return []
+    return questions
